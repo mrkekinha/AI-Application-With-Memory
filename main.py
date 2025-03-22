@@ -43,7 +43,7 @@ with_message_history = RunnableWithMessageHistory(model, get_session_history)
 config = {"configurable":{"session_id":"chat1"}}
 
 # Exemplo de interação inicial do usuário
-response = with_message_history.invoke(
+response=with_message_history.invoke(
     [HumanMessage(content="Oi, meu nome é Maria e sou Engenheira.")],
     config=config
 )
@@ -51,10 +51,12 @@ response = with_message_history.invoke(
 # Exibir a resposta do modelo
 print("Resposta do modelo:", response.content)
 
+# exemplo 2 -------------------------------------------------
+
 # criação de um prompt template para estruturar a entrada do modelo
 prompt = ChatPromptTemplate.from_messages(
   [
-      ("system", "você é um assistente útil. responda todas ass perguntas com precisão "),
+      ("system", "você é um assistente útil. responda todas as perguntas com precisão "),
       MessagesPlaceholder (variable_name="messages") # permitir adicionar mensagens de forma dinamica
   ]
 )
@@ -63,47 +65,47 @@ prompt = ChatPromptTemplate.from_messages(
 chain = prompt | model #usando lcel para conectar o prompt ao modelo
 
 #exemplo de interação com o modelo usando o template
-response = chain.invoke (
+chain.invoke (
     { "messages": [HumanMessage(content= "oi, o meu nome é maria!")]}
 )
 
 #gerenciamento da memoria do chatbot
 
 trimmer = trim_messages(
-    max_tokens = 45, #define um limite maximo de tokens para evitar ultrapassar o consumo de memoria
-    strategy = "last", #define a estrategia de corte para remover mensagens antigas
-    token_counter = model, #usa o modelo para contar os tokens
-    include_system = True, #inclui mensagens do sistema no historico
-    allow_partial = False, #evita que as mensagens sejam cortadas parcialmente
-    start_on ="human" #começa a contagem com a mensagem humana
+    max_tokens=45, #define um limite maximo de tokens para evitar ultrapassar o consumo de memoria
+    strategy="last", #define a estrategia de corte para remover mensagens antigas
+    token_counter=model, #usa o modelo para contar os tokens
+    include_system=True, #inclui mensagens do sistema no historico
+    allow_partial=False, #evita que as mensagens sejam cortadas parcialmente
+    start_on="human" #começa a contagem com a mensagem humana
 )
 
 #exemplo de historico de mensagens
 messages = [
-    SystemMessage(content="você é um assistente. responda todas as perguntas com precisão."),
-    HumanMessage(content=" oi, o meu nome é raquel."),
-    AIMessage(content="oi, raquel! como posso te ajudar hoje?"),
-    HumanMessage(content="eu gosto de sorvete de doce de leite.")
+     SystemMessage(content="Você é um bom assistente"),
+    HumanMessage(content="Oi! Meu nome é maria"),
+    AIMessage(content="Oi, maria! Como posso te ajudar?"),
+    HumanMessage(content="Eu gosto de sorvete de chocolate"),
 
 ]
 
 #aplicar o limitador de memoria ao historico
-response = trimmer.invoke(messages)
+trimmer.invoke(messages)
 
 #criando um pipeline de execução para otimizar a passafem de informações entre os componentes
 chain = (
-    RunnablePassthrough.assign(messages=itemgetter("messages") | trimmer)
-    | prompt
-    | model
+    RunnablePassthrough.assign(messages=itemgetter("messages") | trimmer) #otimiza o historico
+    | prompt #passa a entrada pelo template de prompt
+    | model #envio ao modelo
 )
 
 #exemplo de interação utilizando o pipeline otimizado
 response = chain.invoke(
     {
-        "messages": [HumanMessage(content="qual é o sorvete que eu gosto?")],
+        "messages": messages + [HumanMessage(content="qual é o sorvete que eu gosto?")],
         
     }
 )
 
 #exibir a resposta final do modelo
-print ("resposta final do motelo", response.content)
+print ("resposta final do modelo", response.content)
