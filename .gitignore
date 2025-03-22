@@ -1,0 +1,5 @@
+#impedir da pasta venv subir no repositorio remoto
+venv/
+
+#impedir de subir arquivo com variaveis de ambiente
+.env
